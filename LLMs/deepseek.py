@@ -2,7 +2,7 @@ from openai import OpenAI
 import pandas as pd
 client = OpenAI(
     base_url="https://api.deepseek.com/",
-    api_key="sk-1a39859dc5a44c618418658a462a898c"
+    api_key="<deepseek_api>"
 )
 
 def call_api(code_snippet):
