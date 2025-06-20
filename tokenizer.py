@@ -3,8 +3,6 @@ import re
 import sys
 from utils import csv
 from pyverilog.vparser.lexer import dump_tokens
-import xiangsi as xs
-# import shlex
 
 
 def tokenize(text):
@@ -148,10 +146,12 @@ number_pattern = re.compile(
 if __name__ == '__main__':
     input_file = r'D:\source\Dataset\distinct.csv'
     df = csv.read_csv(input_file)
-    train_dict = {}
-    eval_dict = {}
-    test_dict = {}
-    token_seqs = []
+    # train_dict = {}
+    # eval_dict = {}
+    # test_dict = {}
+    # token_seqs = []
+    # token_sets = []
+    dataset_dict ={}
     cnt = 0
     for no in range(len(df)):
         code = df["text"].iloc[no]
@@ -235,22 +235,30 @@ if __name__ == '__main__':
         #         flag = False
         #
         # if flag:
-        token_seqs.append(token_seq)
+        # token_seqs.append(token_seq)
         type_seq = [row[1] for row in result]
 
+        # token_set = set(token_seq)
+        # token_sets.append(token_set)
+        # if cnt % 10 == 0:
+        #     test_dict[cnt] = [token_seq, type_seq]
+        # elif cnt % 10 < 3:
+        #     eval_dict[cnt] = [token_seq, type_seq]
+        # else:
+        #     train_dict[cnt] = [token_seq, type_seq]
+        dataset_dict[cnt]=[token_seq,type_seq]
         if cnt % 10 == 0:
-            test_dict[cnt] = [token_seq, type_seq]
-        elif cnt % 10 < 3:
-            eval_dict[cnt] = [token_seq, type_seq]
-        else:
-            train_dict[cnt] = [token_seq, type_seq]
+            print(cnt)
         cnt += 1
 
-    with open("eval_tokenize_res.txt", "w", encoding="utf-8") as file:
-        json.dump(eval_dict, file)
 
-    with open("train_tokenize_res.txt", "w", encoding="utf-8") as file:
-        json.dump(train_dict, file)
-
-    with open("test_tokenize_res.txt", "w", encoding="utf-8") as file:
-        json.dump(test_dict, file)
+    with open("all_tokenize_res.txt", "w", encoding="utf-8") as file:
+        json.dump(dataset_dict, file)
+    # with open("eval_tokenize_res.txt", "w", encoding="utf-8") as file:
+    #     json.dump(eval_dict, file)
+    #
+    # with open("train_tokenize_res.txt", "w", encoding="utf-8") as file:
+    #     json.dump(train_dict, file)
+    #
+    # with open("test_tokenize_res.txt", "w", encoding="utf-8") as file:
+    #     json.dump(test_dict, file)
