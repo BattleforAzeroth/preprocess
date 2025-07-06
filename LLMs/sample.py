@@ -54,49 +54,10 @@ def process_dataframe(input_df, code_column='code'):
     return output_df
 
 
-# 示例使用
 if __name__ == "__main__":
-    # 假设原始df有一个名为'code'的列包含代码文件
-    data = {
-        'filename': ['file1.java', 'file2.py', 'file3.c'],
-        'code': [
-            """
-            // 这是一个单行注释
-            public class Hello {
-                /* 这是一个
-                多行注释 */
-                public static void main(String[] args) {
-                    System.out.println("Hello"); // 打印
-                    System.out.println("World");
-                    // 更多代码
-                    int x = 5;
-                    int y = 10;
-                    int sum = x + y;
-                    System.out.println(sum);
-                    return 0;
-                }
-            }
-            """,
-
-            """
-            # Python代码
-            def add(a, b):
-                '''这是一个函数'''
-                return a + b
-
-            print(add(2, 3))
-            """,
-
-            """
-            /* 只有一行代码 */
-            printf("Hello");
-            """
-        ]
-    }
     input_file = r'D:\source\Dataset\filtered.csv'
     df = csv.read_csv(input_file)
 
-    input_df = pd.DataFrame(data)
     output_df = process_dataframe(df, code_column='text')
 
     # 保存到CSV文件

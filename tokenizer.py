@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+from tqdm import tqdm
 from utils import csv
 from pyverilog.vparser.lexer import dump_tokens
 
@@ -145,15 +146,16 @@ number_pattern = re.compile(
 
 if __name__ == '__main__':
     input_file = r'D:\source\Dataset\distinct.csv'
+    output_file = "./out/all_tokenize_res.txt"
     df = csv.read_csv(input_file)
     # train_dict = {}
     # eval_dict = {}
     # test_dict = {}
     # token_seqs = []
     # token_sets = []
-    dataset_dict ={}
+    dataset_dict = {}
     cnt = 0
-    for no in range(len(df)):
+    for no in tqdm(range(len(df)), desc="Parsing"):
         code = df["text"].iloc[no]
         code += '\n'
 
@@ -194,7 +196,6 @@ if __name__ == '__main__':
 
         if not dump:
             continue
-        print("total: " + str(no))
         first_line = dump.splitlines()[0].split()
         if len(first_line) > 4:
             first_part = ' '.join(first_line[:-3])
@@ -246,13 +247,11 @@ if __name__ == '__main__':
         #     eval_dict[cnt] = [token_seq, type_seq]
         # else:
         #     train_dict[cnt] = [token_seq, type_seq]
-        dataset_dict[cnt]=[token_seq,type_seq]
-        if cnt % 10 == 0:
-            print(cnt)
+        dataset_dict[cnt] = [token_seq, type_seq]
         cnt += 1
 
-
-    with open("all_tokenize_res.txt", "w", encoding="utf-8") as file:
+    print(f"Parsed Dataset: {len(dataset_dict)}")
+    with open(output_file, "w", encoding="utf-8") as file:
         json.dump(dataset_dict, file)
     # with open("eval_tokenize_res.txt", "w", encoding="utf-8") as file:
     #     json.dump(eval_dict, file)
