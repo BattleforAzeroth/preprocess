@@ -2,7 +2,7 @@ import json
 import re
 import sys
 from tqdm import tqdm
-from utils import csv
+from utils import file_io
 from pyverilog.vparser.lexer import dump_tokens
 
 
@@ -147,12 +147,7 @@ number_pattern = re.compile(
 if __name__ == '__main__':
     input_file = r'D:\source\Dataset\distinct.csv'
     output_file = "./out/all_tokenize_res.txt"
-    df = csv.read_csv(input_file)
-    # train_dict = {}
-    # eval_dict = {}
-    # test_dict = {}
-    # token_seqs = []
-    # token_sets = []
+    df = file_io.read_csv(input_file)
     dataset_dict = {}
     cnt = 0
     for no in tqdm(range(len(df)), desc="Parsing"):
@@ -226,38 +221,9 @@ if __name__ == '__main__':
 
         token_seq = [row[0] for row in result]
 
-        # flag = True
-        # for token in token_seqs:
-        #     seq = ' '.join(token)
-        #     current_seq = ' '.join(token_seq)
-        #     # 相似度度量
-        #     # if seq == current_seq:
-        #     if xs.minhash(seq, current_seq) > 0.75:
-        #         flag = False
-        #
-        # if flag:
-        # token_seqs.append(token_seq)
         type_seq = [row[1] for row in result]
-
-        # token_set = set(token_seq)
-        # token_sets.append(token_set)
-        # if cnt % 10 == 0:
-        #     test_dict[cnt] = [token_seq, type_seq]
-        # elif cnt % 10 < 3:
-        #     eval_dict[cnt] = [token_seq, type_seq]
-        # else:
-        #     train_dict[cnt] = [token_seq, type_seq]
         dataset_dict[cnt] = [token_seq, type_seq]
         cnt += 1
 
     print(f"Parsed Dataset: {len(dataset_dict)}")
-    with open(output_file, "w", encoding="utf-8") as file:
-        json.dump(dataset_dict, file)
-    # with open("eval_tokenize_res.txt", "w", encoding="utf-8") as file:
-    #     json.dump(eval_dict, file)
-    #
-    # with open("train_tokenize_res.txt", "w", encoding="utf-8") as file:
-    #     json.dump(train_dict, file)
-    #
-    # with open("test_tokenize_res.txt", "w", encoding="utf-8") as file:
-    #     json.dump(test_dict, file)
+    file_io.write_dict2json(dataset_dict, output_file)

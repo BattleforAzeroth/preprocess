@@ -1,4 +1,4 @@
-from utils import csv
+from utils import file_io
 import pandas as pd
 import re
 import random
@@ -56,7 +56,7 @@ def process_dataframe(input_df, code_column='code'):
 
 if __name__ == "__main__":
     input_file = r'D:\source\Dataset\filtered.csv'
-    df = csv.read_csv(input_file)
+    df = file_io.read_csv(input_file)
 
     output_df = process_dataframe(df, code_column='text')
 

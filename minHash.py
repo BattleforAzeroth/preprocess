@@ -6,6 +6,8 @@ import time
 import random
 from dataclasses import dataclass
 
+from utils import file_io
+
 
 @dataclass
 class MinHashConfig:
@@ -212,8 +214,8 @@ def main(sets):
 
 
 if __name__ == "__main__":
-    with open("./out/all_tokenize_res.txt", "r", encoding="utf-8") as file:
-        dataset_dict = json.load(file)
+    file = "./out/all_tokenize_res.txt"
+    dataset_dict = file_io.read_dict(file)
     token_sets = []
     for k, v in dataset_dict.items():
         token_sets.append(set(v[0]))

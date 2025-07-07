@@ -3,6 +3,7 @@ import json
 from typing import Dict, Set
 import os
 import time
+from utils import file_io
 
 
 def load_similarity_matrix(file_path: str = './out/similarity_matrix.pt', device: str = 'cuda') -> torch.Tensor:
@@ -121,8 +122,7 @@ def filter_and_save_results(
     }
 
     # 保存结果
-    with open(output_path, "w", encoding="utf-8") as file:
-        json.dump(filtered_dict, file)
+    file_io.write_dict2json(filtered_dict, output_path)
     print(f"Original items: {len(token_dict):,}")
     print(f"Removed items: {len(to_remove):,}")
     print(f"Filtered items: {len(filtered_dict):,}")
