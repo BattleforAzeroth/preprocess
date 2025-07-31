@@ -1,11 +1,9 @@
 import json
-import torch
 import numpy as np
 from typing import List, Set
 import time
 import random
 from dataclasses import dataclass
-
 from utils import file_io
 
 
@@ -26,12 +24,14 @@ class MinHashGenerator:
 
     def _generate_hash_params(self):
         """生成哈希函数族: h(x) = (a * x + b) % prime"""
-        prime = (1 << 61) - 1  # 一个大质数
+        # 使用31位梅森质数，避免溢出问题
+        prime = 2 ** 31 - 1
 
-        a = self.rng.randint(1, prime, size=(self.config.num_perm, 1), dtype=np.uint64)
-        b = self.rng.randint(0, prime, size=(self.config.num_perm, 1), dtype=np.uint64)
+        # 确保a不为0，b可以为0，使用int64类型保证一致性
+        a = self.rng.randint(1, prime, size=self.config.num_perm, dtype=np.int64)
+        b = self.rng.randint(0, prime, size=self.config.num_perm, dtype=np.int64)
 
-        return torch.from_numpy(np.hstack([a, b])).to(torch.long), prime
+        return torch.from_numpy(np.column_stack([a, b])).to(torch.long), prime
 
     def generate_random_sets(self, num_sets: int, max_size: int = 300) -> List[Set[int]]:
         """生成随机集合"""
@@ -56,6 +56,11 @@ class MinHashGenerator:
         """
         if not sets:
             return torch.zeros((0, self.config.num_perm), dtype=torch.long)
+
+        # 检查设备可用性
+        if device == 'cuda' and not torch.cuda.is_available():
+            print("CUDA不可用，切换到CPU")
+            device = 'cpu'
 
         # 获取所有唯一元素并建立元素到索引的映射
         print("收集所有唯一元素...")
@@ -87,7 +92,6 @@ class MinHashGenerator:
             col_indices = []
 
             for local_idx, s in enumerate(batch_sets):
-                global_idx = batch_start + local_idx
                 for e in s:
                     row_indices.append(local_idx)
                     col_indices.append(element_to_idx[e])
@@ -114,10 +118,14 @@ class MinHashGenerator:
                                               torch.iinfo(torch.long).max,
                                               device=device)
 
-                # 对每个哈希函数进行处理
+                # 对每个哈希函数进行处理，修复数值溢出问题
                 for i in range(self.config.num_perm):
                     a, b = hash_params[i, 0], hash_params[i, 1]
-                    current_hashes = (a * element_indices + b) % self.prime
+
+                    # 使用更安全的哈希计算，确保类型一致性
+                    element_indices_int64 = element_indices.to(torch.int64)
+                    current_hashes = ((a.to(torch.int64) * element_indices_int64 + b.to(torch.int64)) % self.prime).to(
+                        torch.long)
 
                     # 获取稀疏矩阵的非零元素
                     rows = set_matrix.indices()[0]
@@ -135,20 +143,25 @@ class MinHashGenerator:
 
         return signatures
 
-    def similarity(self, signatures: torch.Tensor, device='cuda', batch_size=1000):
+    def similarity(self, signatures: torch.Tensor, device='cuda', batch_size=500):
         """
         分批计算所有签名对之间的相似度
 
         参数:
             signatures: MinHash签名矩阵 [num_sets, num_perm]
             device: 计算设备
-            batch_size: 批处理大小
+            batch_size: 批处理大小（减小以节省GPU内存）
 
         返回:
             sim_matrix: 相似度矩阵 [num_sets, num_sets]
         """
         if len(signatures) == 0:
             return torch.zeros((0, 0))
+
+        # 检查设备可用性
+        if device == 'cuda' and not torch.cuda.is_available():
+            print("CUDA不可用，切换到CPU")
+            device = 'cpu'
 
         num_sets = len(signatures)
         sim_matrix = torch.zeros((num_sets, num_sets), dtype=torch.float32)
@@ -186,13 +199,6 @@ def main(sets):
     )
     minhash = MinHashGenerator(config)
 
-    # # 生成50,000个随机集合
-    # print("生成50,000个随机集合...")
-    # start_time = time.time()
-    # sets = minhash.generate_random_sets(num_sets=50000, max_size=300)
-    # print(f"生成集合耗时: {time.time() - start_time:.2f}秒")
-    # print(f"示例集合大小: {len(sets[0])}, {len(sets[1])}, {len(sets[2])}")
-
     # 计算MinHash签名
     print("\n计算MinHash签名...")
     start_time = time.time()
@@ -203,7 +209,7 @@ def main(sets):
     # 计算相似度矩阵
     print("\n计算相似度矩阵...")
     start_time = time.time()
-    sim_matrix = minhash.similarity(signatures, device='cuda', batch_size=1000)
+    sim_matrix = minhash.similarity(signatures, device='cuda', batch_size=500)
     print(f"相似度矩阵计算总耗时: {time.time() - start_time:.2f}秒")
     print(f"相似度矩阵形状: {sim_matrix.shape}")
 
